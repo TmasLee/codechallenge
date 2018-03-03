@@ -1,124 +1,89 @@
+import Ant from './Ant';
 import React, { Component } from 'react';
-import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 const R = require('ramda');
 
 class Table extends Component {
-
+  
   constructor(props){
     super(props);
-    
+
+    this.tableProgress = 'Not yet run';
+
     this.state = {
-      progress: 'Not yet run',
-      ants: null,
+      ants: this.props.ants.ants,
     }
 
-    this.calculateAntWin = this.calculateAntWin.bind(this);
+    this.calculateAndSortWin = this.calculateAndSortWin.bind(this);
   }
 
-  //  Initialize progress property of each ant.
-  //  Not optimal to call setState here but won't cause performance issues
-  componentDidMount(){
-    var updatedAnts = this.props.ants.ants.map(ant => {
-      ant.progress = 'Not  run yet';
-      return ant;
-    });
-    this.setState({
-      ants: updatedAnts
-    });
-  }
-
-  /**  
-  Call generateAntWinLikelihoodCalculator on each ant and pass in callback
-  to add progress/winChance property to each ant. Call setState after updating
-  each ant. Check progress of each ant as well. 
-
-  Too much logic!! Should abstract each ant.
+  /** 
+   * Before first render create Ant objects from json
   */
-  calculateAntWin(){
-    var updatedAnts = this.props.ants.ants.map(ant => {
-      generateAntWinLikelihoodCalculator()((chance) => {
-        console.log(ant.name);
-        ant.progress = 'Calculated';
-        ant.winChance = chance;
-        console.log(ant.winChance);
-        this.setState({ants: updatedAnts});
-
-        //  After updating each ant check if all ants are calculated.
-        //  Again, too much logic!
-        if (this.state.ants){
-          var count = 1;
-          this.state.ants.forEach(ant => {
-            if (ant.progress === 'Calculated'){
-              count++;
-            }
-          })
-          if (count === this.state.ants.length){
-            this.setState({progress: 'All calculated'});
-          }
-        }
-
-        //  I also have to sort the ant array in here based on winChance.
-        if (this.state.ants){
-          console.log(sortByWinChance(this.state.ants));
-          this.setState({ants: sortByWinChance(this.state.ants)});
-        }
-        this.setState({});
-
-
-      });
-    var antProgress = this.props.ants.ants.map(()=>{
-      if (!ant.winChance){
-        ant.progress = 'In progress';
-        this.setState({ants: updatedAnts});
-      } 
-    })
+  componentDidMount(){
+    var updatedAnts = this.state.ants.map(ant => {
+      ant.winChance = null;
+      ant.progress = 'Not yet run';
       return ant;
     });
+    this.setState({ants: updatedAnts});
+  }
 
-    console.log(updatedAnts);
-    this.setState({
-      ants: updatedAnts,
-      progress: 'In Progress'
+  checkAntsProgress(){
+    var count = 0;
+    this.state.ants.forEach(ant => {
+      if (ant.progress === 'Calculated'){
+        count++;
+      }
     });
+    if (count === 5){
+      this.tableProgress = 'Calculated';
+    }
+  }
+
+  calculateAndSortWin(){
+    this.tableProgress = 'In progress';
+    var updatedAnts = this.state.ants.map(ant => {
+      ant.progress = 'In progress';
+      generateAntWinLikelihoodCalculator()((chance) => {
+        ant.winChance = chance;
+        ant.progress = 'Calculated';
+        this.setState({ants: sortByWinChance(updatedAnts)});
+      });
+      return ant
+    });
+    this.setState({});
   }
 
   render(){
 
-    if (this.state.progress === 'Not yet run'){
-      return (
-        <div className='table'>
-          <BootstrapTable data={this.state.ants}>
-            <TableHeaderColumn dataField='name' isKey>Name</TableHeaderColumn>
-            <TableHeaderColumn dataField='length'>Length</TableHeaderColumn>
-            <TableHeaderColumn dataField='color'>Color</TableHeaderColumn>
-            <TableHeaderColumn dataField='weight'>Weight</TableHeaderColumn>
-            <TableHeaderColumn dataField='winChance' datasort={true}>Win Chance</TableHeaderColumn>
-            <TableHeaderColumn dataField='progress'>Calculation Progress</TableHeaderColumn>
-          </BootstrapTable>
-          <br/>
-          <p>Progress: {this.state.progress}</p>
-          <br/>
-          <button className='winChanceBtn' onClick={this.calculateAntWin}>
-            Calculate Win Chance
-          </button>
-      </div>
-      )
-    }
+    this.checkAntsProgress();
 
     return(
       <div className='table'>
-        <BootstrapTable data={this.state.ants}>
-          <TableHeaderColumn dataField='name' isKey>Name</TableHeaderColumn>
-          <TableHeaderColumn dataField='length'>Length</TableHeaderColumn>
-          <TableHeaderColumn dataField='color'>Color</TableHeaderColumn>
-          <TableHeaderColumn dataField='weight' >Weight</TableHeaderColumn>
-          <TableHeaderColumn dataField='winChance' datasort={true}>Win Chance</TableHeaderColumn>
-          <TableHeaderColumn dataField='progress'>Calculation Progress</TableHeaderColumn>
-        </BootstrapTable>
+        <table border='1'>
+          <tbody>
+            <tr>
+              <th>Name</th>
+              <th>Length</th>
+              <th>Color</th>
+              <th>Weight</th>
+              <th>Chance</th>
+              <th>Progress</th>
+            </tr>
+          </tbody>
+          {this.state.ants.map(ant => {
+            return <Ant name={ant.name}
+                        length={ant.length}
+                        color={ant.color}
+                        weight={ant.weight}
+                        winChance={ant.winChance}
+                        progress={ant.progress}/>
+          })}
+        </table>
         <br/>
-        <p>Progress: {this.state.progress}</p>
+        <p>Progress: {this.tableProgress}</p>
         <br/>
-        <button className='winChanceBtn' onClick={this.calculateAntWin}>
+        <button className='winChanceBtn' onClick={this.calculateAndSortWin}>
           Calculate Win Chance
         </button>
       </div>
@@ -138,9 +103,9 @@ function generateAntWinLikelihoodCalculator() {
     }, delay);
   };
 }
+
 function winChance(o){
   return o.winChance;
 }
 
 const sortByWinChance = R.sortBy(winChance);
-console.log(sortByWinChance);
