@@ -72,12 +72,7 @@ class Table extends Component {
             </tr>
           </tbody>
           {this.state.ants.map(ant => {
-            return <Ant name={ant.name}
-                        length={ant.length}
-                        color={ant.color}
-                        weight={ant.weight}
-                        winChance={ant.winChance}
-                        progress={ant.progress}/>
+            return <Ant {...ant} key={ant.name}/>
           })}
         </table>
         <br/>

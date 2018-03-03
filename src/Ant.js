@@ -1,8 +1,6 @@
 import React from 'react';
 
-const Ant = (props) => {
-  const {name,length,color,weight,winChance,progress} = props;
-
+const Ant = ({name,length,color,weight,winChance,progress}) => {
   return (
     <tbody>
       <tr key={name}>
